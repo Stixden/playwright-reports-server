@@ -293,6 +293,7 @@ export class S3 implements Storage {
 
         const dir = path.dirname(file.name);
         const id = path.basename(dir);
+        const size = `${(file.size / 1024 / 1024).toFixed(2)} Mb`;
         const parentDir = path.basename(path.dirname(dir));
 
         const projectName = parentDir === REPORTS_PATH ? '' : parentDir;
@@ -307,6 +308,7 @@ export class S3 implements Storage {
           reportID: id,
           project: projectName,
           createdAt: file.lastModified,
+          size: size,
           reportUrl: `${serveReportRoute}/${projectName ? encodeURIComponent(projectName) : ''}/${id}/index.html`,
         };
 
@@ -371,11 +373,13 @@ export class S3 implements Storage {
     await withError(this.clear(...objects));
   }
 
-  async saveResult(buffer: Buffer, resultDetails: ResultDetails): Promise<{ resultID: UUID; createdAt: string }> {
+  async saveResult(buffer: Buffer, resultDetails: ResultDetails) {
     const resultID = randomUUID();
+    const size = `${(buffer.length / 1024 / 1024).toFixed(2)} Mb`;
 
     const metaData = {
       resultID,
+      size,
       createdAt: new Date().toISOString(),
       ...resultDetails,
     };

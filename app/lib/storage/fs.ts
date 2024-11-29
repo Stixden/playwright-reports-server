@@ -149,6 +149,7 @@ export async function readReports(input?: ReadReportsInput): Promise<ReadReports
     paginatedFiles.map(async (file) => {
       const id = path.basename(file.filePath);
       const parentDir = path.basename(path.dirname(file.filePath));
+      const size = await getFolderSizeInMb(path.dirname(file.filePath) + '/' + id);
 
       const projectName = parentDir === REPORTS_PATH ? '' : parentDir;
 
@@ -156,6 +157,7 @@ export async function readReports(input?: ReadReportsInput): Promise<ReadReports
         reportID: id,
         project: projectName,
         createdAt: file.birthtime,
+        size,
         reportUrl: `${serveReportRoute}/${projectName ? encodeURIComponent(projectName) : ''}/${id}/index.html`,
       };
     }),
@@ -197,6 +199,8 @@ export async function saveResult(buffer: Buffer, resultDetails: ResultDetails) {
 
   const { error: writeZipError } = await withError(fs.writeFile(path.join(RESULTS_FOLDER, `${resultID}.zip`), buffer));
 
+  const size = await getFolderSizeInMb(path.join(RESULTS_FOLDER, `${resultID}.zip`));
+
   if (writeZipError) {
     throw new Error(`failed to save result ${resultID} zip file: ${writeZipError.message}`);
   }
@@ -204,6 +208,7 @@ export async function saveResult(buffer: Buffer, resultDetails: ResultDetails) {
   const metaData = {
     resultID,
     createdAt: new Date().toISOString(),
+    size,
     ...resultDetails,
   };
 
