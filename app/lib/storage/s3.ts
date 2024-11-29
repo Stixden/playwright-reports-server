@@ -15,6 +15,7 @@ import { generatePlaywrightReport } from '@/app/lib/pw';
 import { withError } from '@/app/lib/withError';
 import { type Result, type Report, type ResultDetails, type ServerDataInfo } from '@/app/lib/storage/types';
 import { env } from '@/app/config/env';
+import { getFileReportID } from './file';
 
 const createClient = () => {
   const endPoint = env.S3_ENDPOINT;
@@ -279,12 +280,20 @@ export class S3 implements Storage {
     const reportsStream = this.client.listObjectsV2(this.bucket, REPORTS_BUCKET, true);
 
     const reports: Report[] = [];
+    const reportSizes = new Map<string, number>();
 
     return new Promise((resolve, reject) => {
       reportsStream.on('data', (file) => {
         if (!file?.name) {
           return;
         }
+
+        const reportID = getFileReportID(file.name);
+
+        const newSize = (reportSizes.get(reportID) ?? 0) + file.size;
+
+        reportSizes.set(reportID, newSize);
+
         if (!file.name.endsWith('index.html') || file.name.includes('trace')) {
           return;
         }
@@ -293,7 +302,6 @@ export class S3 implements Storage {
 
         const dir = path.dirname(file.name);
         const id = path.basename(dir);
-        const size = `${(file.size / 1024 / 1024).toFixed(2)} Mb`;
         const parentDir = path.basename(path.dirname(dir));
 
         const projectName = parentDir === REPORTS_PATH ? '' : parentDir;
@@ -308,8 +316,8 @@ export class S3 implements Storage {
           reportID: id,
           project: projectName,
           createdAt: file.lastModified,
-          size: size,
           reportUrl: `${serveReportRoute}/${projectName ? encodeURIComponent(projectName) : ''}/${id}/index.html`,
+          size: '',
         };
 
         if (noFilters || shouldFilterByProject || shouldFilterByID) {
@@ -328,7 +336,13 @@ export class S3 implements Storage {
 
         const currentReports = handlePagination<Report>(reports, input?.pagination);
 
-        resolve({ reports: currentReports, total: reports.length });
+        resolve({
+          reports: currentReports.map((report) => ({
+            ...report,
+            size: bytesToString(reportSizes.get(report.reportID) ?? 0),
+          })),
+          total: reports.length,
+        });
       });
     });
   }
