@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const pagination = parseFromRequest(searchParams);
   const project = searchParams.get('project') ?? '';
+  const last = searchParams.get('last') ?? false;
 
   const { result: reports, error } = await withError(storage.readReports({ pagination, project }));
 
@@ -17,5 +18,5 @@ export async function GET(request: NextRequest) {
     return new Response(error.message, { status: 400 });
   }
 
-  return Response.json(reports!);
+  return Response.json(last ? reports?.reports[0] : reports!);
 }
