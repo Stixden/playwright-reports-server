@@ -389,7 +389,7 @@ export class S3 implements Storage {
 
   async saveResult(buffer: Buffer, resultDetails: ResultDetails) {
     const resultID = randomUUID();
-    const size = `${(buffer.length / 1024 / 1024).toFixed(2)} Mb`;
+    const size = bytesToString(buffer.length);
 
     const metaData = {
       resultID,
