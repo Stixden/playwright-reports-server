@@ -1,9 +1,11 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
+import path, { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { type Dirent, type Stats } from 'node:fs';
 
 import getFolderSize from 'get-folder-size';
+
+import { parse } from '../parser';
 
 import { bytesToString, getUniqueProjectsList } from './format';
 import { DATA_FOLDER, REPORTS_FOLDER, REPORTS_PATH, RESULTS_FOLDER, TMP_FOLDER } from './constants';
@@ -151,6 +153,12 @@ export async function readReports(input?: ReadReportsInput): Promise<ReadReports
       const reportPath = path.dirname(file.filePath);
       const parentDir = path.basename(reportPath);
       const size = await getFolderSizeInMb(path.join(reportPath, id));
+      const htmlFilePath = await readFile(
+        join(parentDir !== 'reports' ? parentDir : '', id, 'index.html'),
+        'text/html',
+      );
+      const reportInfo = await parse(htmlFilePath as string);
+      const stats = reportInfo?.stats;
 
       const projectName = parentDir === REPORTS_PATH ? '' : parentDir;
 
@@ -159,6 +167,7 @@ export async function readReports(input?: ReadReportsInput): Promise<ReadReports
         project: projectName,
         createdAt: file.birthtime,
         size,
+        stats,
         reportUrl: `${serveReportRoute}/${projectName ? encodeURIComponent(projectName) : ''}/${id}/index.html`,
       };
     }),

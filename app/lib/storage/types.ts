@@ -1,7 +1,7 @@
 import { type Pagination } from './pagination';
 
 import { type UUID } from '@/app/types';
-import { type ReportInfo, type ReportTest } from '@/app/lib/parser/types';
+import { type ReportStats, type ReportInfo, type ReportTest } from '@/app/lib/parser/types';
 
 export interface Storage {
   getServerDataInfo: () => Promise<ServerDataInfo>;
@@ -63,6 +63,7 @@ export type Report = {
   reportUrl: string;
   createdAt: Date;
   size: string;
+  stats: ReportStats;
 };
 
 export type ReportHistory = Report & ReportInfo;

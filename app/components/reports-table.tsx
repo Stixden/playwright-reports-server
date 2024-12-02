@@ -19,6 +19,7 @@ import { keepPreviousData } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import TablePaginationOptions from './table-pagination-options';
+import { SmallStatChart } from './smallStat-chart';
 
 import { withQueryParams } from '@/app/lib/network';
 import { defaultProjectName } from '@/app/lib/constants';
@@ -30,6 +31,7 @@ import { ReadReportsOutput } from '@/app/lib/storage';
 
 const columns = [
   { name: 'ID', uid: 'reportID' },
+  { name: 'Status', uid: 'status' },
   { name: 'Project', uid: 'project' },
   { name: 'Created At', uid: 'createdAt' },
   { name: 'Size', uid: 'size' },
@@ -134,18 +136,35 @@ export default function ReportsTable({ onChange }: ReportsTableProps) {
         >
           {(item) => (
             <TableRow key={item.reportID}>
-              <TableCell className="w-1/2">
-                <Link href={`/report/${item.reportID}`} prefetch={false}>
-                  <div className="flex flex-row">
-                    {item.reportID} <LinkIcon />
-                  </div>
+              <TableCell className="w-1/8">
+                <Tooltip
+                  className="hover:cursor-pointer"
+                  content={item.reportID}
+                  placement="top"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(item.reportID);
+                  }}
+                >
+                  <Link href={`/report/${item.reportID}`} prefetch={false}>
+                    <div className="flex flex-row items-center space-x-2">
+                      <div className="w-16">{item.reportID.split('-')[0]}</div>
+                      <div className="w-10 h-10 flex items-center justify-center">
+                        <LinkIcon />
+                      </div>
+                    </div>
+                  </Link>
+                </Tooltip>
+              </TableCell>
+              <TableCell className="w-1/6">
+                <Link className="cursor-pointer" href={`/report/${item.reportID}`} prefetch={false}>
+                  {item.stats ? <SmallStatChart stats={item.stats} /> : <div>No stats available</div>}
                 </Link>
               </TableCell>
               <TableCell className="w-1/4">{item.project}</TableCell>
               <TableCell className="w-1/4">
                 <FormattedDate date={item.createdAt} />
               </TableCell>
-              <TableCell className="w-1/4">{item.size}</TableCell>
+              <TableCell className="w-1/4 min-w-24">{item.size}</TableCell>
               <TableCell className="w-1/4">
                 <div className="flex gap-4 justify-end">
                   <Tooltip color="success" content="Open Report" placement="top">

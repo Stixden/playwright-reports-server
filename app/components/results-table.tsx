@@ -12,6 +12,7 @@ import {
   type Selection,
   Spinner,
   Pagination,
+  Tooltip,
 } from '@nextui-org/react';
 import { keepPreviousData } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -158,7 +159,18 @@ export default function ResultsTable({ onSelect, onDeleted, selected }: ResultsT
         >
           {(item) => (
             <TableRow key={item.resultID}>
-              <TableCell className="w-1/3">{item.resultID}</TableCell>
+              <TableCell className="w-1/6">
+                <Tooltip
+                  className="hover:cursor-pointer"
+                  content={item.resultID}
+                  placement="top"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(item.resultID);
+                  }}
+                >
+                  {item.resultID.split('-')[0]}
+                </Tooltip>
+              </TableCell>
               <TableCell className="w-1/6">{item.project}</TableCell>
               <TableCell className="w-1/12">
                 <FormattedDate date={new Date(item.createdAt)} />
@@ -173,7 +185,7 @@ export default function ResultsTable({ onSelect, onDeleted, selected }: ResultsT
                   >{`${key}: ${value}`}</Chip>
                 ))}
               </TableCell>
-              <TableCell className="w-1/4">{item.size}</TableCell>
+              <TableCell className="w-1/4 min-w-24">{item.size}</TableCell>
               <TableCell className="w-1/12">
                 <div className="flex gap-4 justify-center">
                   <DeleteResultsButton resultIds={[item.resultID]} onDeletedResult={shouldRefetch} />
